@@ -5,6 +5,7 @@ R="\e[31m"
 G="\e[32m"
 Y="\e[33m"
 N="\e[0m"
+MongoDB_HOST=mongodb.ramya.website
 
 TIMESTAMP=$(date +%F-%H-%M-%S)
 LOGFILE="/tmp/$0-$TIMESTAMP.log"
@@ -28,26 +29,26 @@ else
     echo "You are root user"
 fi # fi means reverse of if, indicating condition end
 
-cp mongo.repo /etc/yum.repos.d/mongo.repo &>> $LOGFILE
+dnf install https://rpms.remirepo.net/enterprise/remi-release-8.rpm -y &>> $LOGFILE
 
-VALIDATE $? "Copied MongoDB Repo"
+VALIDATE $? "Installed remi release"
 
-dnf install mongodb-org -y &>> $LOGFILE
+dnf module enable redis:remi-6.2 -y &>> $LOGFILE
 
-VALIDATE $? "Installing MongoDB"
+VALIDATE $? "Enable redis"
 
-systemctl enable mongod &>> $LOGFILE
+dnf install redis -y &>> $LOGFILE
 
-VALIDATE $? "Enabling MongoDB"
+VALIDATE $? "Installed redis"
 
-systemctl start mongod &>> $LOGFILE
+sed -i 's/127.0.0.1/0.0.0.0/g' /etc/redis/redis.conf &>> $LOGFILE
 
-VALIDATE $? "Starting MongoDB"
+VALIDATE $? "Remote access to redis"
 
-sed -i 's/127.0.0.1/0.0.0.0/g' /etc/mongod.conf &>> $LOGFILE
+systemctl enable redis &>> $LOGFILE
 
-VALIDATE $? "Remote access to MongoDB"
+VALIDATE $? "Enabling redis"
 
-systemctl restart mongod &>> $LOGFILE
+systemctl start redis &>> $LOGFILE
 
-VALIDATE $? "Restarting MongoDB"
+VALIDATE $? "starting redis"
